@@ -44,7 +44,7 @@ int main()
 	
     //sf::RenderWindow window(sf::VideoMode(1920, 1080,32), "SFML works!");
     //sf::RenderWindow window(sf::VideoMode(800, 600,32), "SFML works!");
-    sf::RenderWindow window(sf::VideoMode(1280, 720,32), "SFML works!");
+    sf::RenderWindow window(sf::VideoMode(C::SCREEN_WIDTH, C::SCREEN_HEIGHT,32), "SFML works!");
 	window.setVerticalSyncEnabled(false);
     Font font;
 
@@ -125,6 +125,7 @@ int main()
 
 		//don't use imgui before this;
 		ImGui::SFML::Update(window, sf::seconds((float)dt));
+    	ImGui::SetWindowFontScale(2.0f);
 
         g.update(dt);
 		

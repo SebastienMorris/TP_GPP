@@ -8,12 +8,14 @@
 
 #include "HotReloadShader.hpp"
 
+Game* Game::me = 0;
 
-static int cols = 1280 / C::GRID_SIZE;
-static int lastLine = 720 / C::GRID_SIZE - 1;
+static int cols = C::SCREEN_WIDTH / C::GRID_SIZE;
+static int lastLine = C::SCREEN_HEIGHT / C::GRID_SIZE - 1;
 
 Game::Game(sf::RenderWindow * win) {
 	this->win = win;
+	me = this;
 	bg = sf::RectangleShape(Vector2f((float)win->getSize().x, (float)win->getSize().y));
 
 	bool isOk = tex.loadFromFile("res/bg_stars.png");
@@ -21,11 +23,11 @@ Game::Game(sf::RenderWindow * win) {
 		printf("ERR : LOAD FAILED\n");
 	}
 	bg.setTexture(&tex);
-	bg.setSize(sf::Vector2f(1280, 720));
+	bg.setSize(sf::Vector2f(C::SCREEN_WIDTH, C::SCREEN_HEIGHT));
 
 	bgShader = new HotReloadShader("res/bg.vert", "res/bg.frag");
 	
-	for (int i = 0; i < 1280 / C::GRID_SIZE; ++i) 
+	for (int i = 0; i < C::SCREEN_WIDTH / C::GRID_SIZE; ++i) 
 		walls.push_back( Vector2i(i, lastLine) );
 
 	walls.push_back(Vector2i(0, lastLine-1));
@@ -41,6 +43,12 @@ Game::Game(sf::RenderWindow * win) {
 	walls.push_back(Vector2i(cols >>2, lastLine - 4));
 	walls.push_back(Vector2i((cols >> 2) + 1, lastLine - 4));
 	cacheWalls();
+
+	auto sprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE * 2.0f});
+	sprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE * 2.0f);
+	auto playerEnt =  new Entity(sprite);
+	playerEnt->setCoordPixel(C::GRID_SIZE*5, C::SCREEN_HEIGHT - C::GRID_SIZE*2);
+	entities.push_back(playerEnt);
 }
 
 void Game::cacheWalls()
@@ -61,8 +69,10 @@ void Game::processInput(sf::Event ev) {
 		return;
 	}
 	if (ev.type == sf::Event::KeyReleased) {
-		
-	
+		if(ev.key.code == Keyboard::E)
+		{
+			
+		}
 	}
 }
 
@@ -76,15 +86,32 @@ void Game::pollInput(double dt) {
 	float lateralSpeed = 8.0;
 	float maxSpeed = 40.0;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
-
+		if(entities.size())
+		{
+			auto mainChar = entities[0];
+			if(mainChar)
+				mainChar->move(false);
+		}
 	}
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) {
-
+		if(entities.size())
+		{
+			auto mainChar = entities[0];
+			if(mainChar)
+				mainChar->move(true);
+		}
 	}
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-
+		if(entities.size())
+		{
+			auto mainChar = entities[0];
+			if(mainChar && !mainChar->jumping)
+			{
+				mainChar->setJumping(true);
+			}
+		}
 	}
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::T)) {
@@ -122,6 +149,8 @@ void Game::update(double dt) {
 
 	beforeParts.update(dt);
 	afterParts.update(dt);
+
+	entities[0]->update(dt);
 }
 
  void Game::draw(sf::RenderWindow & win) {
@@ -143,6 +172,11 @@ void Game::update(double dt) {
 
 	for (sf::RectangleShape& r : rects) 
 		win.draw(r);
+
+	for(Entity* entity : entities)
+	{
+		win.draw(*entity->sprite);
+	}
 	
 
 	afterParts.draw(win);
@@ -164,6 +198,33 @@ bool Game::isWall(int cx, int cy)
 
 void Game::im()
 {
-
+	for(auto entity : entities)
+	{
+		entity->im();
+	}
 }
+
+bool Game::hasCollision(float gx, float gy, int width, int height)
+{
+	if (gx < 0)
+		return true;
+
+	auto wallRightX = (C::SCREEN_WIDTH / C::GRID_SIZE);
+	if (gx >= wallRightX)
+		return true;
+
+	for(auto wall : walls)
+	{
+		if(wall.x == (int)gx && wall.y == (int)gy)
+			return true;
+
+		if((wall.x == (int)(gx - width/2) || wall.x == (int)(gx + width/2)) && wall.y == (int)(gy - height/2))
+			return true;
+	}
+
+	return false;
+}
+
+
+
 

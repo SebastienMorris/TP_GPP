@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "Entity.h"
 #include "SFML/Graphics.hpp"
 #include "SFML/System.hpp"
 #include "SFML/Window.hpp"
@@ -14,8 +15,10 @@
 using namespace sf;
 
 class HotReloadShader;
+class Entity;
 class Game {
 public:
+	
 	sf::RenderWindow*				win = nullptr;
 
 	sf::RectangleShape				bg;
@@ -27,9 +30,12 @@ public:
 	
 	std::vector<sf::Vector2i>		walls;
 	std::vector<sf::RectangleShape> wallSprites;
+	std::vector<Entity*> entities;
 
 	ParticleMan beforeParts;
 	ParticleMan afterParts;
+
+	static Game* me;
 
 	Game(sf::RenderWindow * win);
 
@@ -46,4 +52,6 @@ public:
 
 	bool isWall(int cx, int cy);
 	void im();
+
+	bool hasCollision(float gx, float gy, int width, int height);
 };
