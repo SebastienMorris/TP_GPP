@@ -176,6 +176,7 @@
     <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
     <ClCompile Include="app.cpp" />
     <ClCompile Include="Particle.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="sys.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -194,10 +195,8 @@
     <ClInclude Include="libs\imgui\imgui.h" />
     <ClInclude Include="Particle.hpp" />
     <ClInclude Include="ParticleMan.hpp" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="sys.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="SaveJSON.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

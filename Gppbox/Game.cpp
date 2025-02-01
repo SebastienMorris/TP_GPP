@@ -94,73 +94,91 @@ static double g_tickTimer = 0.0;
 
 void Game::pollInput(double dt) {
 
-	float lateralSpeed = 8.0;
-	float maxSpeed = 40.0;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
-		if(entities.size())
-		{
-			auto mainChar = entities[0];
-			if(mainChar)
-				mainChar->move(false);
-		}
-	}
-
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) {
-		if(entities.size())
-		{
-			auto mainChar = entities[0];
-			if(mainChar)
-				mainChar->move(true);
-		}
-	}
-
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-		if(entities.size())
-		{
-			auto mainChar = entities[0];
-			if(mainChar && !mainChar->jumping)
-			{
-				mainChar->setJumping(true);
-			}
-		}
-	}
-
-	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl))
+	if(!editMode)
 	{
-		if(!wasPressedLControl)
-		{
-			auto mainChar = entities[0];
-			if(mainChar)
+		float lateralSpeed = 8.0;
+		float maxSpeed = 40.0;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
+			if(entities.size())
 			{
-				mainChar->crouch();
+				auto mainChar = entities[0];
+				if(mainChar)
+					mainChar->move(-1.0f);
 			}
-			wasPressedLControl = true;
 		}
-	}
-	else
-	{
-		if(wasPressedLControl)
-		{
-			auto mainChar = entities[0];
-			if(mainChar)
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) {
+			if(entities.size())
 			{
-				mainChar->uncrouch();
+				auto mainChar = entities[0];
+				if(mainChar)
+					mainChar->move(1.0f);
 			}
-			wasPressedLControl = false;
 		}
-	}
+
+		if(sf::Joystick::hasAxis(0, Joystick::Axis::X))
+		{
+			float moveX = sf::Joystick::getAxisPosition(0, Joystick::Axis::X) / 100;
+			if(moveX >= 0.1f || moveX <= -0.1f) //deadzone
+			{
+				if(entities.size())
+				{
+					auto mainChar = entities[0];
+					if(mainChar)
+						mainChar->move(moveX);
+				}
+			}
+		}
+
+		
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) || sf::Joystick::isButtonPressed(0, 0)) {
+			if(entities.size())
+			{
+				auto mainChar = entities[0];
+				if(mainChar && !mainChar->jumping)
+				{
+					mainChar->setJumping(true);
+				}
+			}
+		}
+
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Joystick::isButtonPressed(0, 1))
+		{
+			if(!wasPressedLControl)
+			{
+				auto mainChar = entities[0];
+				if(mainChar)
+				{
+					mainChar->crouch();
+				}
+				wasPressedLControl = true;
+			}
+		}
+		else
+		{
+			if(wasPressedLControl)
+			{
+				auto mainChar = entities[0];
+				if(mainChar)
+				{
+					mainChar->uncrouch();
+				}
+				wasPressedLControl = false;
+			}
+		}
 	
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::T)) {
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::T)) {
 
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-		if (!wasPressedSpace) {
-			onSpacePressed();
-			wasPressedSpace = true;
 		}
-	}
-	else {
-		wasPressedSpace = false;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
+			if (!wasPressedSpace) {
+				onSpacePressed();
+				wasPressedSpace = true;
+			}
+		}
+		else {
+			wasPressedSpace = false;
+		}
 	}
 
 }
@@ -182,11 +200,12 @@ void Game::update(double dt) {
 
 	g_time += dt;
 	if (bgShader) bgShader->update(dt);
-
+	
 	beforeParts.update(dt);
 	afterParts.update(dt);
 
-	entities[0]->update(dt);
+	if(!editMode)
+		entities[0]->update(dt);
 }
 
  void Game::draw(sf::RenderWindow & win) {
@@ -391,7 +410,7 @@ void Game::im()
 			}
 		}
 	}
-	ImGui::Unindent(0);
+	ImGui::Unindent(0.5f);
 	if(!editMode)
 	{
 		for(auto entity : entities)

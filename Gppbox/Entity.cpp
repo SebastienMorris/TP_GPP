@@ -189,13 +189,11 @@ void Entity::setDropping(bool setDropping)
 }
 
 
-void Entity::move(bool moveRight)
+void Entity::move(float moveX)
 {
-    if(moveRight)
-        dx = moveSpeed;
-    else
-        dx = -moveSpeed;
+    dx = moveX * moveSpeed;
 }
+
 
 void Entity::crouch()
 {
@@ -224,9 +222,6 @@ void Entity::uncrouch()
     crouching = false;
 }
 
-
-
-    
 
 bool Entity::im()
 {
@@ -280,6 +275,18 @@ bool Entity::im()
 
         return chg|chgCoord;
     }
+}
+
+void Entity::Reset()
+{
+    cx = 3;
+    cy = 54;
+    rx = 0.5f;
+    ry = 0.99f;
+    dx = dy = 0;
+    setJumping(false);
+    setDropping(false);
+    uncrouch();
 }
 
 

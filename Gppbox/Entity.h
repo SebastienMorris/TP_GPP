@@ -55,10 +55,11 @@ public:
 
     void setJumping(bool setJumping);
     void setDropping(bool setDropping);
-
-    void move(bool moveRight);
+    
+    void move(float moveX);
     void crouch();
     void uncrouch();
     
     bool im();
+    void Reset();
 };
