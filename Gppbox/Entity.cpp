@@ -119,6 +119,12 @@ void Entity::update(double dt)
     syncPos();
 }
 
+void Entity::draw(sf::RenderWindow& win)
+{
+    win.draw(*sprite);
+}
+
+
 void Entity::setCoordPixel(float x, float y)
 {
     cx = (int)x/C::GRID_SIZE;
@@ -192,6 +198,10 @@ void Entity::setDropping(bool setDropping)
 void Entity::move(float moveX)
 {
     dx = moveX * moveSpeed;
+    if(moveX > 0)
+        lookingRight = true;
+    else
+        lookingRight = false;
 }
 
 
@@ -261,6 +271,7 @@ bool Entity::im()
         Value("jumping", jumping);
         Value("dropping", dropping);
         Value("crouching", crouching);
+        Value("height", height);
 
         if(Button("reset"))
         {

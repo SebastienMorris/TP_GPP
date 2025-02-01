@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Shape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
@@ -35,8 +36,8 @@ public:
     
     bool jumping = false;
     bool dropping = false;
-    
     bool crouching = false;
+    bool lookingRight = true;
 
     int width = 1;
     int height = 2;
@@ -45,7 +46,8 @@ public:
     Entity(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite);
 
     
-    void update(double dt);
+    virtual void update(double dt);
+    virtual void draw(sf::RenderWindow& win);
 
     void setCoordPixel(float x, float y);
     void setCoordGrid(float x, float y);

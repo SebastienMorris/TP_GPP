@@ -12,6 +12,8 @@
 #include "Particle.hpp"
 #include "ParticleMan.hpp"
 
+#include "Player.h"
+
 using namespace sf;
 
 class HotReloadShader;
@@ -32,6 +34,8 @@ public:
 	std::vector<sf::RectangleShape> wallSprites;
 	std::vector<Entity*> entities;
 
+	Player* player;
+
 	ParticleMan beforeParts;
 	ParticleMan afterParts;
 
@@ -46,7 +50,6 @@ public:
 
 	void processInput(sf::Event ev);
 	bool wasPressedSpace = false;
-	bool wasPressedLControl = false;
 	void pollInput(double dt);
 	void onSpacePressed();
 
@@ -57,7 +60,7 @@ public:
 	bool isWall(int cx, int cy);
 	void im();
 
-	void CreateEntity();
+	void CreatePlayer();
 
 	bool hasCollision(float gx, float gy);
 	bool hasCollision(float gx, float gy, int height);

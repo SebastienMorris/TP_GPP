@@ -47,7 +47,7 @@ Game::Game(sf::RenderWindow * win) {
 	Save("ResetSaveFile.txt");
 	cacheWalls();
 
-	CreateEntity();
+	CreatePlayer();
 }
 
 void Game::cacheWalls()
@@ -74,16 +74,22 @@ void Game::processInput(sf::Event ev) {
 		}
 	}
 
-	if(ev.type == sf::Event::MouseButtonPressed)
+	if(editMode)
 	{
-		if(ev.mouseButton.button == Mouse::Left)
+		if(ev.type == sf::Event::MouseButtonPressed)
 		{
-			if(editMode)
+			if(ev.mouseButton.button == Mouse::Left)
+			{
 				if(placeWallEnemytoggle)
 					EplaceEnemy(ev.mouseButton.x, ev.mouseButton.y);
 				else
 					EplaceWall(ev.mouseButton.x, ev.mouseButton.y);
+			}
 		}
+	}
+	else
+	{
+		player->ProcessInput(ev);
 	}
 }
 
@@ -93,94 +99,23 @@ static double g_tickTimer = 0.0;
 
 
 void Game::pollInput(double dt) {
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::T)) {
+
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
+		if (!wasPressedSpace) {
+			onSpacePressed();
+			wasPressedSpace = true;
+		}
+	}
+	else {
+		wasPressedSpace = false;
+	}
 
 	if(!editMode)
 	{
-		float lateralSpeed = 8.0;
-		float maxSpeed = 40.0;
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
-			if(entities.size())
-			{
-				auto mainChar = entities[0];
-				if(mainChar)
-					mainChar->move(-1.0f);
-			}
-		}
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) {
-			if(entities.size())
-			{
-				auto mainChar = entities[0];
-				if(mainChar)
-					mainChar->move(1.0f);
-			}
-		}
-
-		if(sf::Joystick::hasAxis(0, Joystick::Axis::X))
-		{
-			float moveX = sf::Joystick::getAxisPosition(0, Joystick::Axis::X) / 100;
-			if(moveX >= 0.1f || moveX <= -0.1f) //deadzone
-			{
-				if(entities.size())
-				{
-					auto mainChar = entities[0];
-					if(mainChar)
-						mainChar->move(moveX);
-				}
-			}
-		}
-
-		
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) || sf::Joystick::isButtonPressed(0, 0)) {
-			if(entities.size())
-			{
-				auto mainChar = entities[0];
-				if(mainChar && !mainChar->jumping)
-				{
-					mainChar->setJumping(true);
-				}
-			}
-		}
-
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Joystick::isButtonPressed(0, 1))
-		{
-			if(!wasPressedLControl)
-			{
-				auto mainChar = entities[0];
-				if(mainChar)
-				{
-					mainChar->crouch();
-				}
-				wasPressedLControl = true;
-			}
-		}
-		else
-		{
-			if(wasPressedLControl)
-			{
-				auto mainChar = entities[0];
-				if(mainChar)
-				{
-					mainChar->uncrouch();
-				}
-				wasPressedLControl = false;
-			}
-		}
-	
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::T)) {
-
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-			if (!wasPressedSpace) {
-				onSpacePressed();
-				wasPressedSpace = true;
-			}
-		}
-		else {
-			wasPressedSpace = false;
-		}
+		player->PollInput(dt);
 	}
-
 }
 
 static sf::VertexArray va;
@@ -208,7 +143,7 @@ void Game::update(double dt) {
 		entities[0]->update(dt);
 }
 
- void Game::draw(sf::RenderWindow & win) {
+ void Game::draw(sf::RenderWindow& win) {
 	if (closing) return;
 
 	sf::RenderStates states = sf::RenderStates::Default;
@@ -222,7 +157,7 @@ void Game::update(double dt) {
 
 	beforeParts.draw(win);
 
-	for (sf::RectangleShape & r : wallSprites)
+	for (sf::RectangleShape& r : wallSprites)
 		win.draw(r);
 
 	for (sf::RectangleShape& r : rects) 
@@ -230,9 +165,8 @@ void Game::update(double dt) {
 
 	for(Entity* entity : entities)
 	{
-		win.draw(*entity->sprite);
+		entity->draw(win);
 	}
-	
 
 	afterParts.draw(win);
 }
@@ -251,7 +185,7 @@ bool Game::isWall(int cx, int cy)
 	return false;
 }
 
-void Game::CreateEntity()
+void Game::CreatePlayer()
 {
 	auto standSprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE * 2.0f});
 	standSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE * 2.0f);
@@ -259,8 +193,9 @@ void Game::CreateEntity()
 	auto crouchSprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE});
 	crouchSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE);
 	
-	auto playerEnt =  new Entity(standSprite, crouchSprite);
+	auto playerEnt =  new Player(standSprite, crouchSprite);
 	playerEnt->setCoordPixel(C::GRID_SIZE*5, C::SCREEN_HEIGHT - C::GRID_SIZE*2);
+	player = playerEnt;
 	entities.push_back(playerEnt);
 }
 
