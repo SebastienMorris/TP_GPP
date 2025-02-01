@@ -46,6 +46,7 @@ int main()
     //sf::RenderWindow window(sf::VideoMode(800, 600,32), "SFML works!");
     sf::RenderWindow window(sf::VideoMode(C::SCREEN_WIDTH, C::SCREEN_HEIGHT,32), "SFML works!");
 	window.setVerticalSyncEnabled(false);
+	window.setFramerateLimit(60);
     Font font;
 
     if (!font.loadFromFile("res/MAIAN.TTF")) {

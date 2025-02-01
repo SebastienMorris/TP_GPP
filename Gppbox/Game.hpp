@@ -35,6 +35,9 @@ public:
 	ParticleMan beforeParts;
 	ParticleMan afterParts;
 
+	bool editMode = true;
+	bool placeWallEnemytoggle = false;
+
 	static Game* me;
 
 	Game(sf::RenderWindow * win);
@@ -42,7 +45,8 @@ public:
 	void cacheWalls();
 
 	void processInput(sf::Event ev);
-	bool wasPressed = false;
+	bool wasPressedSpace = false;
+	bool wasPressedLControl = false;
 	void pollInput(double dt);
 	void onSpacePressed();
 
@@ -53,5 +57,14 @@ public:
 	bool isWall(int cx, int cy);
 	void im();
 
-	bool hasCollision(float gx, float gy, int width, int height);
+	void CreateEntity();
+
+	bool hasCollision(float gx, float gy);
+	bool hasCollision(float gx, float gy, int height);
+
+	void EplaceWall(int mouseX, int mouseY);
+	void EplaceEnemy(int mouseX, int mouseY);
+
+	void Save(std::string filename);
+	void Load(std::string filename);
 };

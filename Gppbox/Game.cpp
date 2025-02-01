@@ -1,12 +1,14 @@
 
 #include <imgui.h>
 #include <array>
-#include <vector>
 
 #include "C.hpp"
 #include "Game.hpp"
 
+#include <fstream>
+
 #include "HotReloadShader.hpp"
+
 
 Game* Game::me = 0;
 
@@ -42,13 +44,10 @@ Game::Game(sf::RenderWindow * win) {
 	walls.push_back(Vector2i(cols >>2, lastLine - 3));
 	walls.push_back(Vector2i(cols >>2, lastLine - 4));
 	walls.push_back(Vector2i((cols >> 2) + 1, lastLine - 4));
+	Save("ResetSaveFile.txt");
 	cacheWalls();
 
-	auto sprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE * 2.0f});
-	sprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE * 2.0f);
-	auto playerEnt =  new Entity(sprite);
-	playerEnt->setCoordPixel(C::GRID_SIZE*5, C::SCREEN_HEIGHT - C::GRID_SIZE*2);
-	entities.push_back(playerEnt);
+	CreateEntity();
 }
 
 void Game::cacheWalls()
@@ -72,6 +71,18 @@ void Game::processInput(sf::Event ev) {
 		if(ev.key.code == Keyboard::E)
 		{
 			
+		}
+	}
+
+	if(ev.type == sf::Event::MouseButtonPressed)
+	{
+		if(ev.mouseButton.button == Mouse::Left)
+		{
+			if(editMode)
+				if(placeWallEnemytoggle)
+					EplaceEnemy(ev.mouseButton.x, ev.mouseButton.y);
+				else
+					EplaceWall(ev.mouseButton.x, ev.mouseButton.y);
 		}
 	}
 }
@@ -114,17 +125,42 @@ void Game::pollInput(double dt) {
 		}
 	}
 
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl))
+	{
+		if(!wasPressedLControl)
+		{
+			auto mainChar = entities[0];
+			if(mainChar)
+			{
+				mainChar->crouch();
+			}
+			wasPressedLControl = true;
+		}
+	}
+	else
+	{
+		if(wasPressedLControl)
+		{
+			auto mainChar = entities[0];
+			if(mainChar)
+			{
+				mainChar->uncrouch();
+			}
+			wasPressedLControl = false;
+		}
+	}
+	
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::T)) {
 
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
-		if (!wasPressed) {
+		if (!wasPressedSpace) {
 			onSpacePressed();
-			wasPressed = true;
+			wasPressedSpace = true;
 		}
 	}
 	else {
-		wasPressed = false;
+		wasPressedSpace = false;
 	}
 
 }
@@ -196,15 +232,21 @@ bool Game::isWall(int cx, int cy)
 	return false;
 }
 
-void Game::im()
+void Game::CreateEntity()
 {
-	for(auto entity : entities)
-	{
-		entity->im();
-	}
+	auto standSprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE * 2.0f});
+	standSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE * 2.0f);
+
+	auto crouchSprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE});
+	crouchSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE);
+	
+	auto playerEnt =  new Entity(standSprite, crouchSprite);
+	playerEnt->setCoordPixel(C::GRID_SIZE*5, C::SCREEN_HEIGHT - C::GRID_SIZE*2);
+	entities.push_back(playerEnt);
 }
 
-bool Game::hasCollision(float gx, float gy, int width, int height)
+
+bool Game::hasCollision(float gx, float gy)
 {
 	if (gx < 0)
 		return true;
@@ -217,13 +259,149 @@ bool Game::hasCollision(float gx, float gy, int width, int height)
 	{
 		if(wall.x == (int)gx && wall.y == (int)gy)
 			return true;
+	}
 
-		if((wall.x == (int)(gx - width/2) || wall.x == (int)(gx + width/2)) && wall.y == (int)(gy - height/2))
+	return false;
+}
+
+
+bool Game::hasCollision(float gx, float gy, int height)
+{
+	if (gx < 0)
+		return true;
+
+	auto wallRightX = C::SCREEN_WIDTH / C::GRID_SIZE;
+	if (gx >= wallRightX)
+		return true;
+
+	for(auto wall : walls)
+	{
+		if(wall.x == (int)gx && wall.y == (int)gy)
+			return true;
+
+		if(wall.x == (int)gx && wall.y == (int)(gy - (height - 1)))
 			return true;
 	}
 
 	return false;
 }
+
+void Game::EplaceWall(int mouseX, int mouseY)
+{
+	int gridX = mouseX / C::GRID_SIZE;
+	int gridY = mouseY / C::GRID_SIZE;
+
+	for(auto wall : walls)
+	{
+		if(gridX == wall.x && gridY == wall.y)
+		{
+			walls.erase(std::find(walls.begin(), walls.end(), wall));
+			cacheWalls();
+			return;
+		}
+	}
+	
+	walls.push_back(Vector2i(gridX, gridY));
+	cacheWalls();
+}
+
+void Game::EplaceEnemy(int mouseX, int mouseY)
+{
+	
+}
+
+void Game::Save(std::string filename)
+{
+	ofstream saveFile;
+	saveFile.open(filename);
+	if(!saveFile.is_open())
+		return;
+	
+	for(auto wall : walls)
+	{
+		saveFile << std::to_string(wall.x) << "/" << std::to_string(wall.y) << endl;
+	}
+	saveFile.close();
+}
+
+void Game::Load(std::string filename)
+{
+	walls.clear();
+	std::string line;
+	ifstream loadFile;
+	loadFile.open(filename);
+	if(!loadFile.is_open())
+		return;
+
+	while(getline(loadFile, line))
+	{
+		int x = -1;
+		int y = -1;
+
+		std::string number;
+		for(char c : line)
+		{
+			if(c == '/')
+			{
+				x = stoi(number);
+				number = "";
+			}
+			else
+				number += c;
+		}
+		y = stoi(number);
+		walls.push_back(Vector2i(x,y));
+	}
+	loadFile.close();
+	cacheWalls();
+}
+
+
+void Game::im()
+{
+	if(ImGui::CollapsingHeader("Editor", ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		const char* modeLabel = editMode ? "Switch Play Mode" : "Switch Edit Mode";
+		if(ImGui::Button(modeLabel))
+		{
+			editMode = !editMode;
+		}
+		if(editMode)
+		{
+			ImGui::Indent(0);
+			const char* placeLabel = placeWallEnemytoggle ? "Switch Place Wall" : "Switch Place Enemy";
+			if(ImGui::Button(placeLabel))
+			{
+				placeWallEnemytoggle = !placeWallEnemytoggle;
+			}
+
+			if(ImGui::Button("Save"))
+			{
+				Save("SaveFile.txt");
+			}
+
+			if(ImGui::Button("Load"))
+			{
+				Load("SaveFile.txt");
+			}
+
+			if(ImGui::Button("Reset"))
+			{
+				Load("ResetSaveFile.txt");
+			}
+		}
+	}
+	ImGui::Unindent(0);
+	if(!editMode)
+	{
+		for(auto entity : entities)
+		{
+			entity->im();
+		}
+	}
+}
+
+
 
 
 

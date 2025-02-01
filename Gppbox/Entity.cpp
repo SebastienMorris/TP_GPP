@@ -7,9 +7,8 @@
 #include "imgui.h"
 
 
-Entity::Entity(sf::RectangleShape* sprite)
+Entity::Entity(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite) : sprite(standSprite), standSprite(standSprite), crouchSprite(crouchSprite)
 {
-    this->sprite = sprite;
 }
 
 void Entity::update(double dt)
@@ -20,24 +19,6 @@ void Entity::update(double dt)
     double dfr =  60.0f / rate;
 
     dy += grav * dt;
-
-    if(dx < 0)
-    {
-        if(g.hasCollision(cx + rx - 1, cy + ry, width, height) && rx < 0.45f)
-        {
-            
-            dx = 0;
-            rx = 0.45f;
-        }
-    }
-    else if(dx > 0)
-    {
-        if(g.hasCollision(cx + rx + 1, cy + ry, width, height) && rx > 0.55f)
-        {
-            dx = 0;
-            rx = 0.55f;
-        }
-    }
     
     dx = dx * pow(frx, dfr);
     dy = dy * pow(fry, dfr);
@@ -45,38 +26,39 @@ void Entity::update(double dt)
     rx += dx * dt;
     ry += dy * dt;
 
-    if(rx > 1.0f)
+    do
     {
-        if(! g.hasCollision(cx+rx, cy+ry, width, height))
-        {
-            rx--;
-            cx++;
-        }
-        else
+        if(g.hasCollision(cx - 1, cy, height) && rx <= 0.5f)
         {
             dx = 0;
-            rx = 0.55f;
+            rx = 0.5f;
         }
-    }
-    if(rx < 0)
-    {
-        if(! g.hasCollision(cx+rx, cy+ry, width, height))
+        if(rx < 0)
         {
             rx++;
             cx--;
         }
-        else
+    }while(rx < 0);
+    
+    do
+    {
+        if(g.hasCollision(cx + 1, cy, height) && rx >= 0.5f)
         {
             dx = 0;
-            rx = 0.45f;
+            rx = 0.5f;
         }
-    }
+        if(rx > 1)
+        {
+            rx--;
+            cx++;
+        }
+    }while(rx > 1);
 
     if(jumping)
     {
-        if(dy > 0)
+        do
         {
-            if(g.hasCollision(cx + rx, cy + ry, width, height))
+            if(g.hasCollision(cx, cy + 1, height) && ry >= 0.99f)
             {
                 setJumping(false);
                 ry = 0.99f;
@@ -87,11 +69,11 @@ void Entity::update(double dt)
                 ry--;
                 cy++;
             }
-        }
-
-        if(dy < 0)
+        }while (ry > 1);
+        
+        do
         {
-            if(g.hasCollision(cx + rx, cy + ry - 2, width, height))
+            if(g.hasCollision(cx, cy - 2, height) && ry < 0.01f)
             {
                 setJumping(false);
                 ry = 0.01f;
@@ -102,35 +84,36 @@ void Entity::update(double dt)
                 ry++;
                 cy--;
             }
-        }
+        }while(ry < 0);
     }
     
     if(!dropping)
     {
         if(!jumping)
         {
-            if(!g.hasCollision(cx + rx, cy + ry + 1, width, height) || ry < 0.99f && ry > 0)
+            if(!g.hasCollision(cx, cy + 1, height) || ry < 0.99f && ry > 0)
             {
-                dropping = true;
-                grav = 80;
+                setDropping(true);
             }
         }
     }
 
     if(dropping)
     {
-        if(g.hasCollision(cx + rx, cy + ry, width, height))
+        do
         {
-            dropping = false;
-            grav = 0;
-            ry = 0.99f;
-            dy = 0;
-        }
-        else if(ry > 1)
-        {
-            ry--;
-            cy++;
-        }
+            if(g.hasCollision(cx, cy + 1, height) && ry > 0.99f)
+            {
+                setDropping(false);
+                ry = 0.99f;
+                dy = 0;
+            }
+            else if(ry > 1)
+            {
+                ry--;
+                cy++;
+            }
+        }while(ry > 1);
     }
 
     syncPos();
@@ -179,8 +162,8 @@ void Entity::setJumping(bool setJumping)
     
     if(setJumping)
     {
-        dy -= 40;
-        grav = 80.0f;
+        dy -= jumpForce;
+        grav = gravStrength;
         jumping = true;
         dropping = false;
     }
@@ -191,13 +174,57 @@ void Entity::setJumping(bool setJumping)
     }
 }
 
+void Entity::setDropping(bool setDropping)
+{
+    if(setDropping)
+    {
+        dropping = true;
+        grav = gravStrength;
+    }
+    else
+    {
+        grav = 0;
+        dropping = false;
+    }
+}
+
+
 void Entity::move(bool moveRight)
 {
     if(moveRight)
-        dx += moveSpeed;
+        dx = moveSpeed;
     else
-        dx -= moveSpeed;
+        dx = -moveSpeed;
 }
+
+void Entity::crouch()
+{
+    if(crouching)
+        return;
+
+    if(jumping || dropping)
+        return;
+    
+    sprite = crouchSprite;
+    moveSpeed /= crouchMoveDecrease;
+    jumpForce /= crouchJumpDecrease;
+    height /= 2;
+    crouching = true;
+}
+
+void Entity::uncrouch()
+{
+    if(!crouching)
+        return;
+    
+    sprite = standSprite;
+    moveSpeed *= crouchMoveDecrease;
+    jumpForce *= crouchJumpDecrease;
+    height *= 2;
+    crouching = false;
+}
+
+
 
     
 
@@ -205,50 +232,54 @@ bool Entity::im()
 {
     using namespace ImGui;
 
-    bool chg = false;
-    Value("cx", cx);
-    Value("cy", cy);
-
-    Value("rx", rx);
-    Value("ry", ry);
-
-    sf::Vector2i pix = getPosPixel();
-    chg |= DragInt2("rx/ry", &pix.x, 1.0f, -2000, 2000);
-
-    if(chg)
+    if(ImGui::CollapsingHeader("Character", ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen))
     {
-        setCoordPixel(pix.x, pix.y);
-    }
+        bool chg = false;
+        Value("cx", cx);
+        Value("cy", cy);
 
-    sf::Vector2f coord = {cx + rx, cy + ry};
-    bool chgCoord = DragFloat2("coord x/y", &coord.x, 1.0f, -2000, 2000);
-    if(chgCoord)
-    {
-        setCoordGrid(coord.x, coord.y);
+        Value("rx", rx);
+        Value("ry", ry);
+
+        sf::Vector2i pix = getPosPixel();
+        chg |= DragInt2("rx/ry", &pix.x, 1.0f, -2000, 2000);
+
+        if(chg)
+        {
+            setCoordPixel(pix.x, pix.y);
+        }
+
+        sf::Vector2f coord = {cx + rx, cy + ry};
+        bool chgCoord = DragFloat2("coord x/y", &coord.x, 1.0f, -2000, 2000);
+        if(chgCoord)
+        {
+            setCoordGrid(coord.x, coord.y);
         
-    }
+        }
 
-    chg |= DragFloat2("dx/dy", &dx, 0.01f, -20,20);
-    chg |= DragFloat2("frx/fry", &frx, 0.001f, 0, 1);
+        chg |= DragFloat2("dx/dy", &dx, 0.01f, -20,20);
+        chg |= DragFloat2("frx/fry", &frx, 0.001f, 0, 1);
     
-    chg |= DragFloat("move speed", &moveSpeed, 0.001f, 0, 2);
-    chg |= DragFloat("gravity", &grav, 0.001f, -2, 2);
+        chg |= DragFloat("move speed", &moveSpeed, 0.1f, 0, 50);
+        chg |= DragFloat("gravity", &grav, 0.001f, -2, 2);
 
-    Value("jumping", jumping);
-    Value("dropping", dropping);
+        Value("jumping", jumping);
+        Value("dropping", dropping);
+        Value("crouching", crouching);
 
-    if(Button("reset"))
-    {
-        cx = 3;
-        cy = 54;
-        rx = 0.5f;
-        ry = 0.99f;
-        dx = dy = 0;
-        setJumping(false);
-        dropping = false;
+        if(Button("reset"))
+        {
+            cx = 3;
+            cy = 54;
+            rx = 0.5f;
+            ry = 0.99f;
+            dx = dy = 0;
+            setJumping(false);
+            setDropping(false);
+        }
+
+        return chg|chgCoord;
     }
-
-    return chg|chgCoord;
 }
 
 
