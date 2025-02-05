@@ -28,7 +28,7 @@ void Entity::update(double dt)
 
     do
     {
-        if(g.hasCollision(cx - 1, cy, height) && rx <= 0.5f)
+        if(g.hasCollision(cx - 1, cy, height, *this) && rx <= 0.5f)
         {
             dx = 0;
             rx = 0.5f;
@@ -42,7 +42,7 @@ void Entity::update(double dt)
     
     do
     {
-        if(g.hasCollision(cx + 1, cy, height) && rx >= 0.5f)
+        if(g.hasCollision(cx + 1, cy, height, *this) && rx >= 0.5f)
         {
             dx = 0;
             rx = 0.5f;
@@ -58,7 +58,7 @@ void Entity::update(double dt)
     {
         do
         {
-            if(g.hasCollision(cx, cy + 1, height) && ry >= 0.99f)
+            if(g.hasCollision(cx, cy + 1, height, *this) && ry >= 0.99f)
             {
                 setJumping(false);
                 ry = 0.99f;
@@ -73,7 +73,7 @@ void Entity::update(double dt)
         
         do
         {
-            if(g.hasCollision(cx, cy - 2, height) && ry < 0.01f)
+            if(g.hasCollision(cx, cy - 2, height, *this) && ry < 0.01f)
             {
                 setJumping(false);
                 ry = 0.01f;
@@ -91,7 +91,7 @@ void Entity::update(double dt)
     {
         if(!jumping)
         {
-            if(!g.hasCollision(cx, cy + 1, height) || ry < 0.99f && ry > 0)
+            if(!g.hasCollision(cx, cy + 1, height, *this) || ry < 0.99f && ry > 0)
             {
                 setDropping(true);
             }
@@ -102,7 +102,7 @@ void Entity::update(double dt)
     {
         do
         {
-            if(g.hasCollision(cx, cy + 1, height) && ry > 0.99f)
+            if(g.hasCollision(cx, cy + 1, height, *this) && ry > 0.99f)
             {
                 setDropping(false);
                 ry = 0.99f;

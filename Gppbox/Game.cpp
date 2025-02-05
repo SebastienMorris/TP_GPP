@@ -44,10 +44,11 @@ Game::Game(sf::RenderWindow * win) {
 	walls.push_back(Vector2i(cols >>2, lastLine - 3));
 	walls.push_back(Vector2i(cols >>2, lastLine - 4));
 	walls.push_back(Vector2i((cols >> 2) + 1, lastLine - 4));
-	Save("ResetSaveFile.txt");
 	cacheWalls();
 
-	CreatePlayer();
+	CreatePlayer(5, 60);
+
+	Save("ResetSaveFile.txt");
 }
 
 void Game::cacheWalls()
@@ -140,7 +141,8 @@ void Game::update(double dt) {
 	afterParts.update(dt);
 
 	if(!editMode)
-		entities[0]->update(dt);
+		for(auto ent : entities)
+			ent->update(dt);
 }
 
  void Game::draw(sf::RenderWindow& win) {
@@ -185,7 +187,7 @@ bool Game::isWall(int cx, int cy)
 	return false;
 }
 
-void Game::CreatePlayer()
+void Game::CreatePlayer(int spawnX, int spawnY)
 {
 	auto standSprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE * 2.0f});
 	standSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE * 2.0f);
@@ -194,10 +196,27 @@ void Game::CreatePlayer()
 	crouchSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE);
 	
 	auto playerEnt =  new Player(standSprite, crouchSprite);
-	playerEnt->setCoordPixel(C::GRID_SIZE*5, C::SCREEN_HEIGHT - C::GRID_SIZE*2);
+	playerEnt->setCoordGrid(spawnX, spawnY);
 	player = playerEnt;
 	entities.push_back(playerEnt);
 }
+
+void Game::CreateEnemy(int spawnX, int spawnY)
+{
+	auto standSprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE * 2.0f});
+	standSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE * 2.0f);
+	standSprite->setFillColor(sf::Color::Blue);
+
+	auto crouchSprite = new sf::RectangleShape({C::GRID_SIZE, C::GRID_SIZE});
+	crouchSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE);
+	crouchSprite->setFillColor(sf::Color::Blue);
+
+	auto enemyEnt = new Enemy(standSprite, crouchSprite);
+	enemyEnt->setCoordGrid(spawnX, spawnY);
+	enemies.push_back(enemyEnt);
+	entities.push_back(enemyEnt);
+}
+
 
 
 bool Game::hasCollision(float gx, float gy)
@@ -219,7 +238,7 @@ bool Game::hasCollision(float gx, float gy)
 }
 
 
-bool Game::hasCollision(float gx, float gy, int height)
+bool Game::hasCollision(float gx, float gy, int height, Entity& self)
 {
 	if (gx < 0)
 		return true;
@@ -237,14 +256,40 @@ bool Game::hasCollision(float gx, float gy, int height)
 			return true;
 	}
 
+	for(auto ent : entities)
+	{
+		if(ent != &self)
+		{
+			if((int)gx == ent->cx && ((int)gy == ent->cy ||(int)gy == ent->cy -(ent->height - 1)))
+				return true;
+
+			if((int)gx == ent->cx && ((int)gy - (height - 1) == ent->cy ||(int)gy - (height - 1) == ent->cy -(ent->height - 1)))
+				return true;
+		}
+	}
+
 	return false;
 }
+
+Enemy* Game::hasCollisionEnemy(float gx, float gy)
+{
+	for(auto enemy : enemies)
+	{
+		if((int)gx == enemy->cx && ((int)gy == enemy->cy ||(int)gy == enemy->cy -(enemy->height - 1)))
+			return enemy;
+	}
+	return nullptr;
+}
+
 
 void Game::EplaceWall(int mouseX, int mouseY)
 {
 	int gridX = mouseX / C::GRID_SIZE;
 	int gridY = mouseY / C::GRID_SIZE;
 
+	if(gridX == player->cx && (gridY == player->cy || gridY == player->cy - (player->height - 1)))
+		return;
+	
 	for(auto wall : walls)
 	{
 		if(gridX == wall.x && gridY == wall.y)
@@ -261,7 +306,23 @@ void Game::EplaceWall(int mouseX, int mouseY)
 
 void Game::EplaceEnemy(int mouseX, int mouseY)
 {
-	
+	int gridX = mouseX / C::GRID_SIZE;
+	int gridY = mouseY / C::GRID_SIZE;
+
+	if(gridX == player->cx && (gridY == player->cy || gridY == player->cy - (player->height - 1)))
+		return;
+
+	for(auto enemy : enemies)
+	{
+		if(gridX == enemy->cx && (gridY == enemy->cy || gridY == enemy->cy - (enemy->height - 1)))
+		{
+			enemies.erase(std::find(enemies.begin(), enemies.end(), enemy));
+			entities.erase(std::find(entities.begin(), entities.end(), enemy));
+			return;
+		}
+	}
+
+	CreateEnemy(gridX, gridY);
 }
 
 void Game::Save(std::string filename)
@@ -273,14 +334,24 @@ void Game::Save(std::string filename)
 	
 	for(auto wall : walls)
 	{
-		saveFile << std::to_string(wall.x) << "/" << std::to_string(wall.y) << endl;
+		saveFile << std::to_string(wall.x) << " " << std::to_string(wall.y) << " 0" << endl;
 	}
+
+	for(auto enemy : enemies)
+	{
+		saveFile << std::to_string(enemy->cx) << " " << std::to_string(enemy->cy) << " 1" << endl;
+	}
+
+	saveFile << std::to_string(player->cx) << " " << std::to_string(player->cy) << " 2" << endl;
+	
 	saveFile.close();
 }
 
 void Game::Load(std::string filename)
 {
 	walls.clear();
+	entities.clear();
+	enemies.clear();
 	std::string line;
 	ifstream loadFile;
 	loadFile.open(filename);
@@ -291,20 +362,42 @@ void Game::Load(std::string filename)
 	{
 		int x = -1;
 		int y = -1;
+		int id = -1;
 
 		std::string number;
 		for(char c : line)
 		{
-			if(c == '/')
+			if(c == ' ')
 			{
-				x = stoi(number);
+				if(x == -1)
+				{
+					x = stoi(number);
+				}
+				else if(y == -1)
+				{
+					y = stoi(number);
+				}
 				number = "";
 			}
 			else
 				number += c;
 		}
-		y = stoi(number);
-		walls.push_back(Vector2i(x,y));
+		id = stoi(number);
+
+
+		switch (id)
+		{
+			case 0:
+				walls.push_back(Vector2i(x,y));
+				break;
+
+			case 1:
+				CreateEnemy(x, y);
+				break;
+
+			case 2:
+				CreatePlayer(x, y);
+		}
 	}
 	loadFile.close();
 	cacheWalls();

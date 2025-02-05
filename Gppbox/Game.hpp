@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "Enemy.h"
 #include "Entity.h"
 #include "SFML/Graphics.hpp"
 #include "SFML/System.hpp"
@@ -33,6 +34,7 @@ public:
 	std::vector<sf::Vector2i>		walls;
 	std::vector<sf::RectangleShape> wallSprites;
 	std::vector<Entity*> entities;
+	std::vector<Enemy*> enemies;
 
 	Player* player;
 
@@ -60,10 +62,12 @@ public:
 	bool isWall(int cx, int cy);
 	void im();
 
-	void CreatePlayer();
+	void CreatePlayer(int spawnX, int spawnY);
+	void CreateEnemy(int spawnX, int spawnY);
 
 	bool hasCollision(float gx, float gy);
-	bool hasCollision(float gx, float gy, int height);
+	bool hasCollision(float gx, float gy, int height, Entity& self);
+	Enemy* hasCollisionEnemy(float gx, float gy);
 
 	void EplaceWall(int mouseX, int mouseY);
 	void EplaceEnemy(int mouseX, int mouseY);
