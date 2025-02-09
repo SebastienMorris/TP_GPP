@@ -15,7 +15,14 @@ struct Bullet
 
     bool aimingRight;
 
+    bool destroy = false;
+
     sf::CircleShape* sprite;
+
+    ~Bullet()
+    {
+        delete sprite;
+    }
 
     void Initialise(int cx, int cy, float rx, float ry, bool aimingRight, sf::CircleShape* sprite)
     {
@@ -56,9 +63,10 @@ private:
     bool canShoot = true;
     float shootCooldown = 0.5f;
     float shootCooldownTimer = 0;
-    float bulletSpeed = 40.0f;
+    float bulletSpeed = 100.0f;
     float bulletSize = 5.0f;
     std::vector<Bullet*> bullets;
+    std::vector<Bullet*> bulletsToDestroy;
     
     sf::CircleShape* muzzleFireSprite;
 

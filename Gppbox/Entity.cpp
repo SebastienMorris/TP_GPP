@@ -7,8 +7,10 @@
 #include "imgui.h"
 
 
-Entity::Entity(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite) : sprite(standSprite), standSprite(standSprite), crouchSprite(crouchSprite)
+Entity::Entity(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite, EntityType entityType) :
+sprite(standSprite), standSprite(standSprite), crouchSprite(crouchSprite), type(entityType)
 {
+    
 }
 
 void Entity::update(double dt)

@@ -6,9 +6,17 @@
 #include <SFML/Graphics/Texture.hpp>
 #include "C.hpp"
 
+enum EntityType
+{
+    PLAYER,
+    ENEMY
+};
+
 class Entity
 {
 public:
+    EntityType type;
+    
     sf::RectangleShape* sprite;
 
     sf::RectangleShape* standSprite;
@@ -43,7 +51,7 @@ public:
     int height = 2;
 
     
-    Entity(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite);
+    Entity(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite, EntityType type);
 
     
     virtual void update(double dt);

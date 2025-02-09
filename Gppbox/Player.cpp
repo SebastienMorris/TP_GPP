@@ -1,10 +1,11 @@
 ﻿#include "Player.h"
 
+#include <iostream>
 #include <SFML/System/Sleep.hpp>
 
 #include "Game.hpp"
 
-Player::Player(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite) : Entity(standSprite, crouchSprite)
+Player::Player(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite) : Entity(standSprite, crouchSprite, EntityType::PLAYER)
 {
     muzzleFireSprite = new sf::CircleShape(C::GRID_SIZE);
     muzzleFireSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE * 0.5f);
@@ -47,18 +48,26 @@ void Player::PollInput(double dt)
 
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::L))
     {
-        //fireLaser();
-        Shoot();
+        fireLaser();
+        //Shoot();
         wasPressedLaser = true;
     }
     else
     {
         if(wasPressedLaser)
         {
+            for(auto laser : laserSprites)
+                delete laser;
             laserSprites.clear();
             firingLaser = false;
             wasPressedLaser = false;
         }
+    }
+
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::M))
+    {
+        //fireLaser();
+        Shoot();
     }
 
     PollControllerInput(dt);
@@ -103,8 +112,15 @@ void Player::update(double dt)
 {
     Entity::update(dt);
 
+    Game& g = *Game::me;
+
     if(showMuzzle)
     {
+        if(lookingRight)
+            muzzleFireSprite->setPosition((cx + rx + 0.5f) * C::GRID_SIZE, (cy + ry - (float)height/2.0f) * C::GRID_SIZE);
+        else
+            muzzleFireSprite->setPosition((cx + rx - 1.5f) * C::GRID_SIZE, (cy + ry - (float)height/2.0f) * C::GRID_SIZE);
+        
         muzzleLifetimeTimer += dt;
         if(muzzleLifetimeTimer >= muzzleLifetime)
         {
@@ -126,26 +142,66 @@ void Player::update(double dt)
     for(auto bullet : bullets)
     {
         if(bullet->aimingRight)
-        {
             bullet->rx += bulletSpeed * dt;
-
-            while(rx > 1.0f)
+        else
+            bullet->rx -= bulletSpeed * dt;
+        
+        do
+        {
+            if(g.hasCollision(bullet->cx + 1, bullet->cy, 1, *this))
+            {
+                if(!bullet->destroy)
+                {
+                    Enemy* hitEnemy = g.hasCollisionEnemy(bullet->cx + 1, bullet->cy);
+                    if(hitEnemy)
+                        hitEnemy->die();
+                
+                    bulletsToDestroy.push_back(bullet);
+                    bullet->destroy = true;
+                }
+            }
+            if(bullet->rx > 1.0f)
             {
                 bullet->cx++;
                 bullet->rx--;
             }
-        }
-        else
-        {
-            bullet->rx -= bulletSpeed * dt;
+        }while(bullet->rx > 1.0f);
 
-            while(rx < 0.0f)
+        do
+        {
+            if(g.hasCollision(bullet->cx - 1, bullet->cy, 1, *this))
+            {
+                if(!bullet->destroy)
+                {
+                    Enemy* hitEnemy = g.hasCollisionEnemy(bullet->cx - 1, bullet->cy);
+                    if(hitEnemy)
+                        hitEnemy->die();
+
+                    bulletsToDestroy.push_back(bullet);
+                    bullet->destroy = true;
+                }
+            }
+            
+            if(bullet->rx < 0.0f)
             {
                 bullet->cx--;
                 bullet->rx++;
             }
-        }
+        }while (bullet->rx < 0.0f);
         bullet->syncPos();
+    }
+
+    if(!bulletsToDestroy.empty())
+    {
+        for(auto btd : bulletsToDestroy)
+        {
+            
+            if(!bullets.empty())
+                bullets.erase(std::find(bullets.begin(), bullets.end(), btd));
+
+            delete btd;
+        }
+        bulletsToDestroy.clear();
     }
 }
 
@@ -157,20 +213,24 @@ void Player::draw(sf::RenderWindow& win)
     {
         win.draw(*laser);
     }
-
+    
     for(auto bullet : bullets)
     {
         win.draw(*bullet->sprite);
     }
 
     if(showMuzzle)
+    {
         win.draw(*muzzleFireSprite);
+    }
 }
 
 void Player::Shoot()
 {
     if(!canShoot)
         return;
+    
+    showMuzzle = true;
 
     auto bulletSprite = new sf::CircleShape({bulletSize});
     bulletSprite->setOrigin(0.5f, laserPixelSize * 0.5f);
@@ -186,8 +246,12 @@ void Player::Shoot()
 
 void Player::fireLaser()
 {
-    Game* g = Game::me;
+    Game& g = *Game::me;
+    
+    for(auto laser : laserSprites)
+        delete laser;
     laserSprites.clear();
+    
     int x0 = lookingRight ? (cx+rx+0.5f) * C::GRID_SIZE : (cx+rx-0.5f) * C::GRID_SIZE;
     int y0 = (cy+ry - height/2) * C::GRID_SIZE;
 
@@ -195,8 +259,14 @@ void Player::fireLaser()
     for(int i=0; i<laserRange; i++)
     {
         int j = lookingRight ? i : -i;
-        if(g->hasCollision(cx + j, cy - 1))
+        if(g.hasCollision(cx + j, cy - 1, 1, *this))
         {
+            Enemy* hitEnemy = g.hasCollisionEnemy(cx + j, cy - 1);
+            if(hitEnemy)
+            {
+                hitEnemy->die();
+            }
+            
             laserLength = i - 1;
             break;
         }
@@ -244,6 +314,7 @@ void Player::createLaser(int length)
 {
     auto laser = new sf::RectangleShape({(float)length, laserPixelSize});
 }
+
 
 
 

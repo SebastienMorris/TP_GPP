@@ -5,6 +5,10 @@ class Enemy : public Entity
 {
 private:
     int moveDir = 1;
+
+    bool takeDamage = false;
+    float damageAnimDuration = 0.1f;
+    float damageAnimTimer = 0.0f;
     
 public:
 

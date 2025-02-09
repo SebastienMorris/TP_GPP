@@ -2,7 +2,7 @@
 #include "Game.hpp"
 
 
-Enemy::Enemy(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite) : Entity(standSprite, crouchSprite)
+Enemy::Enemy(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite) : Entity(standSprite, crouchSprite, EntityType::ENEMY)
 {
     
 }
@@ -18,10 +18,22 @@ void Enemy::update(double dt)
         moveDir *= -1;
 
     move(moveDir);
+
+    if(takeDamage)
+    {
+        damageAnimTimer += dt;
+        if(damageAnimTimer >= damageAnimDuration)
+        {
+            sprite->setFillColor(Color::Blue);
+            damageAnimTimer = 0;
+            takeDamage = false;
+        }
+    }
 }
 
 void Enemy::die()
 {
-    printf("fiiieifuhshkjfgs<lihn");
+    sprite->setFillColor(Color::White);
+    takeDamage = true;
 }
 

@@ -350,8 +350,12 @@ void Game::Save(std::string filename)
 void Game::Load(std::string filename)
 {
 	walls.clear();
+
+	for(auto ent : entities)
+		delete ent;
 	entities.clear();
 	enemies.clear();
+	
 	std::string line;
 	ifstream loadFile;
 	loadFile.open(filename);
