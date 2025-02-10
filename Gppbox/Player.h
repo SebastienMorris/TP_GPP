@@ -51,6 +51,7 @@ class Player : public Entity
 private:
     bool wasPressedCrouch = false;
     bool wasPressedLaser = false;
+    bool wasPressedShoot = false;
     
     int laserRange = 20;
     float laserPixelSize = 8.0f;
@@ -61,7 +62,7 @@ private:
     float muzzleLifetimeTimer = 0.0f;
 
     bool canShoot = true;
-    float shootCooldown = 0.5f;
+    float shootCooldown = 0.2f;
     float shootCooldownTimer = 0;
     float bulletSpeed = 100.0f;
     float bulletSize = 5.0f;
@@ -79,9 +80,9 @@ public:
 private:
     void PollControllerInput(double dt);
 
-    void Shoot();
+    void Shoot(double dt);
     
-    void fireLaser();
+    void fireLaser(double dt);
     void drawLaser(int x0, int y0, int x1, int y1);
     void createLaserPixel(int x, int y);
     void createLaser(int length);

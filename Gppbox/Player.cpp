@@ -48,7 +48,7 @@ void Player::PollInput(double dt)
 
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::L))
     {
-        fireLaser();
+        fireLaser(dt);
         //Shoot();
         wasPressedLaser = true;
     }
@@ -60,14 +60,23 @@ void Player::PollInput(double dt)
                 delete laser;
             laserSprites.clear();
             firingLaser = false;
+            attacking = false;
             wasPressedLaser = false;
         }
     }
 
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::M))
     {
-        //fireLaser();
-        Shoot();
+        Shoot(dt);
+        wasPressedShoot = true;
+    }
+    else
+    {
+        if(wasPressedShoot)
+        {
+            attacking = false;
+            wasPressedShoot = false;
+        }
     }
 
     PollControllerInput(dt);
@@ -225,10 +234,12 @@ void Player::draw(sf::RenderWindow& win)
     }
 }
 
-void Player::Shoot()
+void Player::Shoot(double dt)
 {
     if(!canShoot)
         return;
+
+    attacking = true;
     
     showMuzzle = true;
 
@@ -241,12 +252,16 @@ void Player::Shoot()
     bullet->Initialise(cx, cy, rx, ry - (float)height/2.0f, lookingRight, bulletSprite);
     bullets.push_back(bullet);
 
+    addForce((lookingRight ? -200 : 200) * dt, 0);
+
     canShoot = false;
 }
 
-void Player::fireLaser()
+void Player::fireLaser(double dt)
 {
     Game& g = *Game::me;
+
+    attacking = true;
     
     for(auto laser : laserSprites)
         delete laser;
@@ -277,6 +292,9 @@ void Player::fireLaser()
         laserRangePixel *= -1; 
      
     drawLaser(x0, y0, x0 + laserRangePixel, y0);
+    
+    addForce((lookingRight ? -20 : 20) * dt, 0);
+    
     firingLaser = true;
 }
 

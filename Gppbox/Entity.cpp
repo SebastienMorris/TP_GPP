@@ -200,10 +200,13 @@ void Entity::setDropping(bool setDropping)
 void Entity::move(float moveX)
 {
     dx = moveX * moveSpeed;
-    if(moveX > 0)
-        lookingRight = true;
-    else
-        lookingRight = false;
+    if(!attacking)
+    {
+        if(moveX > 0)
+            lookingRight = true;
+        else
+            lookingRight = false;
+    }
 }
 
 
@@ -232,6 +235,12 @@ void Entity::uncrouch()
     jumpForce *= crouchJumpDecrease;
     height *= 2;
     crouching = false;
+}
+
+void Entity::addForce(float xVel, float yVel)
+{
+    dx += xVel;
+    dy += yVel;
 }
 
 

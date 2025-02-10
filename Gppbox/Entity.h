@@ -45,9 +45,9 @@ public:
     bool jumping = false;
     bool dropping = false;
     bool crouching = false;
+    bool attacking = false;
     bool lookingRight = true;
-
-    int width = 1;
+    
     int height = 2;
 
     
@@ -69,6 +69,8 @@ public:
     void move(float moveX);
     void crouch();
     void uncrouch();
+
+    void addForce(float xVel, float yVel);
     
     bool im();
     void Reset();
