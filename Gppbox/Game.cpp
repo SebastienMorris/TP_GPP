@@ -71,7 +71,6 @@ void Game::processInput(sf::Event ev) {
 	if (ev.type == sf::Event::KeyReleased) {
 		if(ev.key.code == Keyboard::E)
 		{
-			
 		}
 	}
 
@@ -79,12 +78,44 @@ void Game::processInput(sf::Event ev) {
 	{
 		if(ev.type == sf::Event::MouseButtonPressed)
 		{
-			if(ev.mouseButton.button == Mouse::Left)
+			if(ev.mouseButton.button == Mouse::Right)
 			{
+				currentMouseX = ev.mouseButton.x / C::GRID_SIZE;
+				currentMouseY = ev.mouseButton.y / C::GRID_SIZE;
+			
 				if(placeWallEnemytoggle)
 					EplaceEnemy(ev.mouseButton.x, ev.mouseButton.y);
 				else
 					EplaceWall(ev.mouseButton.x, ev.mouseButton.y);
+				mouseRight = true;
+			}
+		}
+
+		if(ev.type == sf::Event::MouseButtonReleased)
+		{
+			if(ev.mouseButton.button == Mouse::Right)
+			{
+				mouseRight = false;
+			}
+		}
+
+		if(ev.type == sf::Event::MouseMoved)
+		{
+			int mouseX = ev.mouseMove.x / C::GRID_SIZE;
+			int mouseY= ev.mouseMove.y / C::GRID_SIZE;
+			
+			if(mouseRight)
+			{
+				if(mouseX != currentMouseX || mouseY != currentMouseY)
+				{
+					if(placeWallEnemytoggle)
+						EplaceEnemy(ev.mouseMove.x, ev.mouseMove.y);
+					else
+						EplaceWall(ev.mouseMove.x, ev.mouseMove.y);
+
+					currentMouseX = mouseX;
+					currentMouseY = mouseY;
+				}
 			}
 		}
 	}
@@ -113,7 +144,14 @@ void Game::pollInput(double dt) {
 		wasPressedSpace = false;
 	}
 
-	if(!editMode)
+	if(editMode)
+	{
+		if(sf::Mouse::isButtonPressed(Mouse::Right))
+		{
+			
+		}
+	}
+	else
 	{
 		player->PollInput(dt);
 	}
@@ -196,7 +234,7 @@ void Game::CreatePlayer(int spawnX, int spawnY)
 	crouchSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE);
 	
 	auto playerEnt =  new Player(standSprite, crouchSprite);
-	playerEnt->setCoordGrid(spawnX, spawnY);
+	playerEnt->setCoordPixel(spawnX * C::GRID_SIZE + C::GRID_SIZE * 0.5f, spawnY * C::GRID_SIZE);
 	player = playerEnt;
 	entities.push_back(playerEnt);
 }
@@ -212,7 +250,7 @@ void Game::CreateEnemy(int spawnX, int spawnY)
 	crouchSprite->setFillColor(sf::Color::Blue);
 
 	auto enemyEnt = new Enemy(standSprite, crouchSprite);
-	enemyEnt->setCoordGrid(spawnX, spawnY);
+	enemyEnt->setCoordPixel(spawnX * C::GRID_SIZE + C::GRID_SIZE * 0.5f, (spawnY + 1) * C::GRID_SIZE);
 	enemies.push_back(enemyEnt);
 	entities.push_back(enemyEnt);
 }
@@ -286,21 +324,26 @@ void Game::EplaceWall(int mouseX, int mouseY)
 {
 	int gridX = mouseX / C::GRID_SIZE;
 	int gridY = mouseY / C::GRID_SIZE;
-
-	if(gridX == player->cx && (gridY == player->cy || gridY == player->cy - (player->height - 1)))
-		return;
 	
-	for(auto wall : walls)
+	if(eraseMode)
 	{
-		if(gridX == wall.x && gridY == wall.y)
+		for(auto wall : walls)
 		{
-			walls.erase(std::find(walls.begin(), walls.end(), wall));
-			cacheWalls();
-			return;
+			if(gridX == wall.x && gridY == wall.y)
+			{
+				walls.erase(std::find(walls.begin(), walls.end(), wall));
+				cacheWalls();
+				return;
+			}
 		}
 	}
-	
-	walls.push_back(Vector2i(gridX, gridY));
+	else
+	{
+		if(ECheckEntity(gridX, gridY, 0, 0, 1))
+			return;
+		
+		walls.push_back(Vector2i(gridX, gridY));
+	}
 	cacheWalls();
 }
 
@@ -309,21 +352,55 @@ void Game::EplaceEnemy(int mouseX, int mouseY)
 	int gridX = mouseX / C::GRID_SIZE;
 	int gridY = mouseY / C::GRID_SIZE;
 
-	if(gridX == player->cx && (gridY == player->cy || gridY == player->cy - (player->height - 1)))
-		return;
-
-	for(auto enemy : enemies)
+	if(eraseMode)
 	{
-		if(gridX == enemy->cx && (gridY == enemy->cy || gridY == enemy->cy - (enemy->height - 1)))
+		for(auto enemy : enemies)
 		{
-			enemies.erase(std::find(enemies.begin(), enemies.end(), enemy));
-			entities.erase(std::find(entities.begin(), entities.end(), enemy));
+			if(gridX == enemy->cx && (gridY == enemy->cy || gridY == enemy->cy - (enemy->height - 1)))
+			{
+				enemies.erase(std::find(enemies.begin(), enemies.end(), enemy));
+				entities.erase(std::find(entities.begin(), entities.end(), enemy));
+				return;
+			}
+		}
+	}
+	else
+	{
+		if(ECheckEntity(gridX, gridY, 1, 1, 2))
 			return;
+		
+		CreateEnemy(gridX, gridY);
+	}
+}
+
+bool Game::ECheckEntity(int gx, int gy, int xRange, int yRange, int height)
+{
+	for(auto wall : walls)
+	{
+		if(gx == wall.x && (gy == wall.y || gy - (height-1) == wall.y))
+			return true;
+	}
+	
+	for(int x = gx-xRange; x <= gx+xRange; x++)
+	{
+		for(int y = gy-yRange-(height-1); y < gy+yRange+(height-1); y++)
+		{
+			if(x == player->cx && (y == player->cy || y == player->cy - (player->height - 1)))
+				return true;
+			
+			for(auto enemy : enemies)
+			{
+				if(x == enemy->cx && (y == enemy->cy || y == enemy->cy - (enemy->height - 1)))
+				{
+					return true;
+				}
+			}
 		}
 	}
 
-	CreateEnemy(gridX, gridY);
+	return false;
 }
+
 
 void Game::Save(std::string filename)
 {
@@ -412,7 +489,7 @@ void Game::im()
 {
 	if(ImGui::CollapsingHeader("Editor", ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		const char* modeLabel = editMode ? "Switch Play Mode" : "Switch Edit Mode";
+		const char* modeLabel = editMode ? "Current Mode: EDIT" : "Current Mode: PLAY";
 		if(ImGui::Button(modeLabel))
 		{
 			editMode = !editMode;
@@ -420,10 +497,17 @@ void Game::im()
 		if(editMode)
 		{
 			ImGui::Indent(0);
-			const char* placeLabel = placeWallEnemytoggle ? "Switch Place Wall" : "Switch Place Enemy";
+			const char* placeLabel = placeWallEnemytoggle ? "Current Item: ENEMY" : "Current Item: WALL";
 			if(ImGui::Button(placeLabel))
 			{
 				placeWallEnemytoggle = !placeWallEnemytoggle;
+				eraseMode = false;
+			}
+
+			const char* eraseLabel = eraseMode ? "Erase Mode: ON" : "Erase mode: OFF";
+			if(ImGui::Button(eraseLabel))
+			{
+				eraseMode = !eraseMode;
 			}
 
 			if(ImGui::Button("Save"))

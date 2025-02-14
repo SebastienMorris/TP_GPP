@@ -43,6 +43,12 @@ public:
 
 	bool editMode = true;
 	bool placeWallEnemytoggle = false;
+	bool eraseMode = false;
+	
+	bool mouseRight = false;
+
+	int currentMouseX = -1;
+	int currentMouseY = -1;
 
 	static Game* me;
 
@@ -71,6 +77,7 @@ public:
 
 	void EplaceWall(int mouseX, int mouseY);
 	void EplaceEnemy(int mouseX, int mouseY);
+	bool ECheckEntity(int gx, int gy, int xRange, int yRange, int height);
 
 	void Save(std::string filename);
 	void Load(std::string filename);
