@@ -15,14 +15,26 @@
 
 #include "Player.h"
 
+#include "SecondOrderDynamics.h"
+
 using namespace sf;
 
 class HotReloadShader;
 class Entity;
 class Game {
+
+private:
+	float camFrequency = 1.0f;
+	float camDampening = 0.9f;
+	float camBouciness = 0.0f;
+
+	SecondOrderDynamics secondOrderDynamics = SecondOrderDynamics(camFrequency, camDampening, camBouciness, {0, 0, 0});
+	
 public:
 	
 	sf::RenderWindow*				win = nullptr;
+	const sf::View*					editView = nullptr;
+	sf::View*					    playView = nullptr;
 
 	sf::RectangleShape				bg;
 	HotReloadShader *				bgShader = nullptr;
@@ -53,6 +65,7 @@ public:
 	static Game* me;
 
 	Game(sf::RenderWindow * win);
+	~Game();
 
 	void cacheWalls();
 

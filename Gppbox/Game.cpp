@@ -17,6 +17,12 @@ static int lastLine = C::SCREEN_HEIGHT / C::GRID_SIZE - 1;
 
 Game::Game(sf::RenderWindow * win) {
 	this->win = win;
+	editView = &this->win->getDefaultView();
+	playView = new sf::View(*editView);
+	playView->zoom(0.5f);
+	
+	win->setView(*editView);
+	
 	me = this;
 	bg = sf::RectangleShape(Vector2f((float)win->getSize().x, (float)win->getSize().y));
 
@@ -45,11 +51,17 @@ Game::Game(sf::RenderWindow * win) {
 	walls.push_back(Vector2i(cols >>2, lastLine - 4));
 	walls.push_back(Vector2i((cols >> 2) + 1, lastLine - 4));
 	cacheWalls();
-
+	
 	CreatePlayer(5, 60);
 
 	Save("ResetSaveFile.txt");
 }
+
+Game::~Game()
+{
+	delete playView;
+}
+
 
 void Game::cacheWalls()
 {
@@ -179,8 +191,20 @@ void Game::update(double dt) {
 	afterParts.update(dt);
 
 	if(!editMode)
+	{
 		for(auto ent : entities)
 			ent->update(dt);
+
+		Vector3 secondOrderRes = secondOrderDynamics.Calculate(dt, {(player->cx + player->rx) * C::GRID_SIZE, (player->cy + player->ry) * C::GRID_SIZE, 0}, {player->dx, player->dy, 0});
+		//playView->setCenter(player->getPosPixel().x, player->getPosPixel().y)
+		playView->setCenter(secondOrderRes.x, secondOrderRes.y);
+		win->setView(*playView);
+
+	}
+	else
+	{
+		win->setView(*editView);
+	}
 }
 
  void Game::draw(sf::RenderWindow& win) {
@@ -493,6 +517,8 @@ void Game::im()
 		if(ImGui::Button(modeLabel))
 		{
 			editMode = !editMode;
+			if(!editMode)
+				secondOrderDynamics.Reset(camFrequency, camDampening, camBouciness, {(player->cx + player->rx) * C::GRID_SIZE, (player->cy + player->ry) * C::GRID_SIZE, 0});
 		}
 		if(editMode)
 		{
@@ -524,6 +550,13 @@ void Game::im()
 			{
 				Load("ResetSaveFile.txt");
 			}
+		}
+		else
+		{
+			ImGui::Indent(0);
+			ImGui::DragFloat("cam frequency", &camFrequency, 0.1f, 0, 5);
+			ImGui::DragFloat("cam dampening", &camDampening, 0.01f, 0, 1);
+			ImGui::DragFloat("cam bounciness", &camBouciness, 0.1f, 0, 10);
 		}
 	}
 	ImGui::Unindent(0.5f);
