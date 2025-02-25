@@ -53,9 +53,11 @@ private:
     bool wasPressedLaser = false;
     bool wasPressedShoot = false;
     
+    bool firingLaser = false;
     int laserRange = 20;
     float laserPixelSize = 8.0f;
-    bool firingLaser = false;
+    float laserAnimDuration = 1.0f;
+    float laserAnimTimer = 0.0f;
     
     bool showMuzzle = false;
     float muzzleLifetime = 0.1f;

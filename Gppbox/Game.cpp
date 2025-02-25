@@ -273,7 +273,11 @@ void Game::CreateEnemy(int spawnX, int spawnY)
 	crouchSprite->setOrigin(C::GRID_SIZE * 0.5f, C::GRID_SIZE);
 	crouchSprite->setFillColor(sf::Color::Blue);
 
-	auto enemyEnt = new Enemy(standSprite, crouchSprite);
+	auto deadSprite = new sf::RectangleShape({C::GRID_SIZE * 2.0f, C::GRID_SIZE});
+	deadSprite->setOrigin(C::GRID_SIZE, C::GRID_SIZE);
+	deadSprite->setFillColor(sf::Color::Blue);
+
+	auto enemyEnt = new Enemy(standSprite, crouchSprite, deadSprite);
 	enemyEnt->setCoordPixel(spawnX * C::GRID_SIZE + C::GRID_SIZE * 0.5f, (spawnY + 1) * C::GRID_SIZE);
 	enemies.push_back(enemyEnt);
 	entities.push_back(enemyEnt);
@@ -320,6 +324,9 @@ bool Game::hasCollision(float gx, float gy, int height, Entity& self)
 
 	for(auto ent : entities)
 	{
+		if(ent->isDead)
+			continue;
+		
 		if(ent != &self)
 		{
 			if((int)gx == ent->cx && ((int)gy == ent->cy ||(int)gy == ent->cy -(ent->height - 1)))
@@ -337,6 +344,9 @@ Enemy* Game::hasCollisionEnemy(float gx, float gy)
 {
 	for(auto enemy : enemies)
 	{
+		if(enemy->isDead)
+			continue;
+			
 		if((int)gx == enemy->cx && ((int)gy == enemy->cy ||(int)gy == enemy->cy -(enemy->height - 1)))
 			return enemy;
 	}

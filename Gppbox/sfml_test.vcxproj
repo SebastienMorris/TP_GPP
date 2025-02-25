@@ -179,6 +179,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="SecondOrderDynamics.cpp" />
     <ClCompile Include="sys.cpp" />
+    <ClCompile Include="TweenEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
@@ -199,6 +200,7 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="SecondOrderDynamics.h" />
     <ClInclude Include="sys.hpp" />
+    <ClInclude Include="TweenEngine.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -47,6 +47,8 @@ public:
     bool crouching = false;
     bool attacking = false;
     bool lookingRight = true;
+
+    bool isDead = false;
     
     int height = 2;
 

@@ -2,7 +2,9 @@
 #include "Game.hpp"
 
 
-Enemy::Enemy(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite) : Entity(standSprite, crouchSprite, EntityType::ENEMY)
+Enemy::Enemy(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite, sf::RectangleShape* deadSprite) :
+Entity(standSprite, crouchSprite, EntityType::ENEMY),
+deadSprite(deadSprite)
 {
     
 }
@@ -12,28 +14,57 @@ void Enemy::update(double dt)
 {
     Entity::update(dt);
     
-    Game& g = *Game::me;
-
-    if(g.hasCollision(cx + moveDir, cy, height, *this))
-        moveDir *= -1;
-
-    move(moveDir);
-
-    if(takeDamage)
+    if(!isDead)
     {
-        damageAnimTimer += dt;
-        if(damageAnimTimer >= damageAnimDuration)
+        Game& g = *Game::me;
+
+        if(!takingDamage)
         {
-            sprite->setFillColor(Color::Blue);
-            damageAnimTimer = 0;
-            takeDamage = false;
+            if(g.hasCollision(cx + moveDir, cy, height, *this))
+                moveDir *= -1;
+
+            move(moveDir);
+        }
+        else
+        {
+            if(!dropping)
+                takingDamage = false;
+        }
+
+        if(damageAnim)
+        {
+            damageAnimTimer += dt;
+            if(damageAnimTimer >= damageAnimDuration)
+            {
+                sprite->setFillColor(Color::Blue);
+                damageAnimTimer = 0;
+                damageAnim = false;
+            }
         }
     }
 }
 
-void Enemy::die()
+void Enemy::damage(int damage, int damageDirection)
 {
+    takingDamage = true;
     sprite->setFillColor(Color::White);
-    takeDamage = true;
+    damageAnim = true;
+
+    lifes -= damage;
+    if(lifes <= 0)
+    {
+        die(damageDirection);
+        return;
+    }
+
+    addForce(damageDirection * 30.0f, -20.0f);
+}
+
+
+void Enemy::die(int damageDirection)
+{
+    sprite = deadSprite;
+    isDead = true;
+    addForce(damageDirection * 60.0f, -30.0f);
 }
 
