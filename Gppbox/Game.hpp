@@ -28,6 +28,10 @@ private:
 	float camDampening = 0.9f;
 	float camBouciness = 0.0f;
 
+	float camShakeDuration = 0.5f;
+	float camShakeFrequency = 4.0f;
+	float camShakeAmplitude = 4.0f;
+
 	SecondOrderDynamics secondOrderDynamics = SecondOrderDynamics(camFrequency, camDampening, camBouciness, {0, 0, 0});
 	
 public:
@@ -87,6 +91,8 @@ public:
 	bool hasCollision(float gx, float gy);
 	bool hasCollision(float gx, float gy, int height, Entity& self);
 	Enemy* hasCollisionEnemy(float gx, float gy);
+
+	void CamShake();
 
 	void EplaceWall(int mouseX, int mouseY);
 	void EplaceEnemy(int mouseX, int mouseY);

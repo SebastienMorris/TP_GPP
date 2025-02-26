@@ -32,4 +32,9 @@ public:
 	static float angleDeg() {
 		return randF() * 360;
 	}
+
+	static float getPi()
+	{
+		return (float)pi;
+	}
 };

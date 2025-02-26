@@ -253,6 +253,7 @@ void Player::draw(sf::RenderWindow& win)
 
 void Player::Shoot(double dt)
 {
+    Game& g = *Game::me;
     if(!canShoot)
         return;
 
@@ -270,6 +271,7 @@ void Player::Shoot(double dt)
     bullets.push_back(bullet);
 
     addForce((lookingRight ? -200 : 200) * dt, 0);
+    g.CamShake();
 
     canShoot = false;
 }
@@ -277,6 +279,12 @@ void Player::Shoot(double dt)
 void Player::fireLaser(double dt)
 {
     Game& g = *Game::me;
+
+    if(!attacking)
+    {
+        addForce((lookingRight ? -200 : 200) * dt, 0);
+        g.CamShake();
+    }
 
     attacking = true;
     
@@ -315,8 +323,6 @@ void Player::fireLaser(double dt)
         laserRangePixel *= -1; 
      
     drawLaser(x0, y0, x0 + laserRangePixel, y0);
-    
-    addForce((lookingRight ? -20 : 20) * dt, 0);
     
     firingLaser = true;
 }

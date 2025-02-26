@@ -353,6 +353,12 @@ Enemy* Game::hasCollisionEnemy(float gx, float gy)
 	return nullptr;
 }
 
+void Game::CamShake()
+{
+	secondOrderDynamics.StartShake(camShakeDuration, camShakeFrequency, camShakeAmplitude);
+}
+
+
 
 void Game::EplaceWall(int mouseX, int mouseY)
 {
@@ -567,6 +573,10 @@ void Game::im()
 			ImGui::DragFloat("cam frequency", &camFrequency, 0.1f, 0, 5);
 			ImGui::DragFloat("cam dampening", &camDampening, 0.01f, 0, 1);
 			ImGui::DragFloat("cam bounciness", &camBouciness, 0.1f, 0, 10);
+
+			ImGui::DragFloat("cam shake duration", &camShakeDuration, 0.1f, 0, 10);
+			ImGui::DragFloat("cam shake frequency", &camShakeFrequency, 0.1f, 0, 10);
+			ImGui::DragFloat("cam shake amplitude", &camShakeAmplitude, 0.1f, 0, 10);
 		}
 	}
 	ImGui::Unindent(0.5f);
