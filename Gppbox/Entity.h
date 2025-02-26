@@ -65,6 +65,7 @@ public:
 
     sf::Vector2i getPosPixel();
 
+    void Jump();
     void setJumping(bool setJumping);
     void setDropping(bool setDropping);
     

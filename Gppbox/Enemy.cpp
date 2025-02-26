@@ -27,7 +27,7 @@ void Enemy::update(double dt)
         }
         else
         {
-            if(!dropping)
+            if(!jumping)
                 takingDamage = false;
         }
 

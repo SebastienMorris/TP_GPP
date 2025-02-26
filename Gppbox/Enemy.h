@@ -6,7 +6,7 @@ class Enemy : public Entity
 private:
     int moveDir = 1;
 
-    int lifes = 10;
+    int lifes = 3;
 
     bool takingDamage = false;
     

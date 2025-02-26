@@ -160,6 +160,19 @@ sf::Vector2i Entity::getPosPixel()
     return sf::Vector2i((cx+rx) * C::GRID_SIZE, (cy+ry) * C::GRID_SIZE);
 }
 
+void Entity::Jump()
+{
+    if(dropping)
+        return;
+    
+    if(jumping)
+        return;
+    
+    dy -= jumpForce;
+    setJumping(true);
+}
+
+
 void Entity::setJumping(bool setJumping)
 {
     if(dropping)
@@ -170,7 +183,6 @@ void Entity::setJumping(bool setJumping)
     
     if(setJumping)
     {
-        dy -= jumpForce;
         grav = gravStrength;
         jumping = true;
         dropping = false;
@@ -241,6 +253,8 @@ void Entity::addForce(float xVel, float yVel)
 {
     dx += xVel;
     dy += yVel;
+    if(dy != 0)
+        setJumping(true);
 }
 
 

@@ -29,7 +29,7 @@ void Player::PollInput(double dt)
         move(1.0f);
 		
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) 
-        setJumping(true);
+        Jump();
     
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl))
     {
@@ -98,7 +98,7 @@ void Player::PollControllerInput(double dt)
         }
         
         if (sf::Joystick::isButtonPressed(0, 0)) 
-            setJumping(true);
+            Jump();
         
         if(sf::Joystick::isButtonPressed(0, 1))
         {
