@@ -86,7 +86,7 @@ private:
     void Shoot(double dt);
     
     void fireLaser(double dt);
-    void drawAnimLaser(int x0, int x1, int y, double dt);
+    void drawAnimLaser(float x0, float x1, int y, double dt);
     void createLaserSprite(float length, int y);
     void createLaser(int length);
 

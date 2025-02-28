@@ -290,8 +290,9 @@ void Player::fireLaser(double dt)
     int x0 = lookingRight ? (cx+rx+0.5f) * C::GRID_SIZE : (cx+rx-0.5f) * C::GRID_SIZE;
     int y0 = (cy+ry - height/2) * C::GRID_SIZE;
 
-    int laserLength = laserRange;
-    for(int i=0; i<laserRange; i++)
+    float laserNewLength = laserRange;
+    
+    for(int i=0; i<=laserRange; i++)
     {
         int j = lookingRight ? i : -i;
         if(g.hasCollision(cx + j, cy - 1, 1, *this))
@@ -308,29 +309,30 @@ void Player::fireLaser(double dt)
                 hitEnemy->damage(1, damageDir);
             }
             
-            laserLength = i - 1;
+            laserNewLength = i - 1;
+            laserNewLength += lookingRight ? -(rx - 0.5f) : (rx-0.5f);
             break;
         }
     }
     
-    int laserRangePixel = laserLength * C::GRID_SIZE;
+    float laserRangePixel = laserNewLength * C::GRID_SIZE;
     if(!lookingRight)
         laserRangePixel *= -1; 
 
-    drawAnimLaser(x0, x0 + laserRangePixel, y0, dt);
+    drawAnimLaser((float)x0, (float)x0 + laserRangePixel, y0, dt);
     
     firingLaser = true;
 }
 
-void Player::drawAnimLaser(int x0, int x1, int y, double dt)
+void Player::drawAnimLaser(float x0, float x1, int y, double dt)
 {
-    int dist = x1 - x0;
-    if(dist == 0)
+    float dist = x1 - x0;
+    if(dist == 0.0f)
         return;
     
-    float progress = laserLength / (float)dist;
+    float progress = laserLength / dist;
     
-    float newProgress = clamp(progress + dt * (laserAnimSpeed / abs((float)dist)), 0.0, 1.0);
+    float newProgress = clamp(progress + dt * (laserAnimSpeed / abs(dist)), 0.0, 1.0);
     laserLength = TweenEngine::Lerp(0, dist, newProgress);
     createLaserSprite(laserLength, y);
     
