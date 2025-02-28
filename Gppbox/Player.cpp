@@ -62,6 +62,7 @@ void Player::PollInput(double dt)
             firingLaser = false;
             attacking = false;
             wasPressedLaser = false;
+            laserLength = 0;
         }
     }
 
@@ -315,36 +316,30 @@ void Player::fireLaser(double dt)
     int laserRangePixel = laserLength * C::GRID_SIZE;
     if(!lookingRight)
         laserRangePixel *= -1; 
-     
-    drawLaser(x0, y0, x0 + laserRangePixel, y0);
+
+    drawAnimLaser(x0, x0 + laserRangePixel, y0, dt);
     
     firingLaser = true;
 }
 
-void Player::drawLaser(int x0, int y0, int x1, int y1)
+void Player::drawAnimLaser(int x0, int x1, int y, double dt)
 {
-    int dx = x1 - x0;
-    int dy = y1 - y0;
-    if(dx != 0)
-    {
-        int D = 2 * dy - abs(dx);
-        int y = y0;
-        for(int i=0; dx < 0 ? i>dx : i<dx; dx < 0 ? i-- : i++)
-        {
-            createLaserSprite(i, y);
-            if(D > 0)
-            { 
-            y++;
-                D -= 2 * abs(dx);
-            }
-            D += 2 * dy;
-        }
-    }
+    int dist = x1 - x0;
+    if(dist == 0)
+        return;
+    
+    float progress = laserLength / (float)dist;
+    
+    float newProgress = clamp(progress + dt * (laserAnimSpeed / abs((float)dist)), 0.0, 1.0);
+    laserLength = TweenEngine::Lerp(0, dist, newProgress);
+    createLaserSprite(laserLength, y);
+    
 }
 
-void Player::createLaserSprite(int x, int y)
+
+void Player::createLaserSprite(float length, int y)
 {
-    auto spr =  sf::RectangleShape({(float)x , laserPixelSize});
+    auto spr =  sf::RectangleShape({length , laserPixelSize});
     spr.setOrigin(0.5f, laserPixelSize * 0.5f);
     spr.setPosition(lookingRight ? (cx+rx+0.5f) * C::GRID_SIZE : (cx+rx-0.5f) * C::GRID_SIZE, y);
     spr.setFillColor(sf::Color::Red);
