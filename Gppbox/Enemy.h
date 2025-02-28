@@ -24,7 +24,7 @@ private:
 
     
 public:
-
+  
     Enemy(sf::RectangleShape* standSprite, sf::RectangleShape* crouchSprite, sf::RectangleShape* deadSprite);
     void update(double dt) override;
 

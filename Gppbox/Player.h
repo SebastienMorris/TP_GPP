@@ -73,9 +73,10 @@ private:
     
     sf::CircleShape* muzzleFireSprite;
 
+    sf::RectangleShape* laserSprite = new sf::RectangleShape({0.0f, 0.0f});
+
     
 public:
-    std::vector<sf::RectangleShape*> laserSprites;
 
     
     
@@ -86,7 +87,7 @@ private:
     
     void fireLaser(double dt);
     void drawLaser(int x0, int y0, int x1, int y1);
-    void createLaserPixel(int x, int y);
+    void createLaserSprite(int x, int y);
     void createLaser(int length);
 
     

@@ -58,9 +58,7 @@ void Player::PollInput(double dt)
     {
         if(wasPressedLaser)
         {
-            for(auto laser : laserSprites)
-                delete laser;
-            laserSprites.clear();
+            *laserSprite = sf::RectangleShape({0.0f, 0.0f});
             firingLaser = false;
             attacking = false;
             wasPressedLaser = false;
@@ -235,10 +233,8 @@ void Player::draw(sf::RenderWindow& win)
 {
     Entity::draw(win);
     
-    for(auto laser : laserSprites)
-    {
-        win.draw(*laser);
-    }
+    if(laserSprite)
+        win.draw(*laserSprite);
     
     for(auto bullet : bullets)
     {
@@ -288,9 +284,7 @@ void Player::fireLaser(double dt)
 
     attacking = true;
     
-    for(auto laser : laserSprites)
-        delete laser;
-    laserSprites.clear();
+    *laserSprite = sf::RectangleShape({0.0f, 0.0f});
     
     int x0 = lookingRight ? (cx+rx+0.5f) * C::GRID_SIZE : (cx+rx-0.5f) * C::GRID_SIZE;
     int y0 = (cy+ry - height/2) * C::GRID_SIZE;
@@ -337,7 +331,7 @@ void Player::drawLaser(int x0, int y0, int x1, int y1)
         int y = y0;
         for(int i=0; dx < 0 ? i>dx : i<dx; dx < 0 ? i-- : i++)
         {
-            createLaserPixel(x0 + i, y);
+            createLaserSprite(i, y);
             if(D > 0)
             { 
             y++;
@@ -348,13 +342,13 @@ void Player::drawLaser(int x0, int y0, int x1, int y1)
     }
 }
 
-void Player::createLaserPixel(int x, int y)
+void Player::createLaserSprite(int x, int y)
 {
-    auto laserPixel = new sf::RectangleShape({1.0f, laserPixelSize});
-    laserPixel->setOrigin(0.5f, laserPixelSize * 0.5f);
-    laserPixel->setPosition(x, y);
-    laserPixel->setFillColor(sf::Color::Red);
-    laserSprites.push_back(laserPixel);
+    auto spr =  sf::RectangleShape({(float)x , laserPixelSize});
+    spr.setOrigin(0.5f, laserPixelSize * 0.5f);
+    spr.setPosition(lookingRight ? (cx+rx+0.5f) * C::GRID_SIZE : (cx+rx-0.5f) * C::GRID_SIZE, y);
+    spr.setFillColor(sf::Color::Red);
+    *laserSprite = spr;
 }
 
 void Player::createLaser(int length)
